@@ -1,0 +1,332 @@
+---
+title: "TF Analysis v3: Cleaning Demographics & R4W and Follow-up Status Datasets"
+output: html_notebook
+
+---
+```{r}
+library(arsenal)
+library(here)
+library(dplyr)
+library(ggplot2)
+
+# Set working directory to project root with 'here' package:
+knitr::opts_knit$set(root.dir = here::here())
+```
+
+# Import datasets and check UPNs
+```{r}
+# 'Participants - Demographic & R4W Passport Data' (these were provided as a single dataset)
+v3_dem_r4w_raw <- read.csv("../Datasets/v3_dem_r4w.csv") 
+n_distinct(v3_dem_r4w_raw$Contacts.UPN.Number)
+
+# 'Follow-up with Class & Start Date'
+v3_followups_raw <- read.csv("../Datasets/v3_followups.csv") 
+n_distinct(v3_followups_raw$UPN.Number)
+
+```
+
+# Tidying the 'demographics & R4W' dataset
+## Step 1: Tidy up columns
+```{r}
+v3_dem_r4w <- v3_dem_r4w_raw %>%
+
+# Rename cols
+  rename(
+    bank_acc = `Bank.Account_8`,
+    career_goal_spec = `Career.Goal`,
+    career_goal = `Career.Goal_6`,
+    case_status = `Case.Status`,
+    case_start = `Case.Start`,
+    case_end = `Case.End`,
+    case_type = `Case.Type`,
+    childcare_resp = `Childcare.responsibilities`,
+    coach_contact_id = `Coach.Contact.ID`,
+    coach_name = `Coach.Name`,
+    cohort = `Cohort`,
+    contact_id = `Contact.ID`,
+    city = `Contacts.City`,
+    ethnicity = `Contacts.Ethnicity`,
+    first_lang = `Contacts.First.language`,
+    fsm = `Contacts.Free.school.meals`,
+    gender = `Contacts.Gender`,
+    postcode = `Contacts.Postal.Code`,
+    pref_lang = `Contacts.Preferred.Language`,
+    reg_disabled = `Contacts.Registered.disabled`,
+    upn = `Contacts.UPN.Number`,
+    cv = `CV_2`,
+    care_status = `In.care.or.care.Leaver`,
+    mock_interview = `Mock.Interview_3`,
+    pt_job = `Part.Time.Job_7`,
+    pro_email = `Pro.Email_9`,
+    pro_voicemail = `Pro.Voicemail_10`,
+    pupil_premium = `Pupil.Premium`,
+    reason_for_inclusion = `Reason.for.Inclusion`,
+    sen_type = `Special.Educational.Needs.Type`,
+    sen = `Special.Educational.Needs`,
+    volunteering = `Volunteering_4`,
+    work_exp = `Work.Exp_5`
+  ) %>%
+
+# Remove unnecessary cols  
+  select(-career_goal_spec, -coach_contact_id, -case_type, -contact_id, -coach_name, -pref_lang, -reason_for_inclusion, -sen_type) %>%
+
+# Reorder
+select("upn", "cohort", "case_start", "case_end", "case_status", "postcode", "city", "gender", "ethnicity", "first_lang", "reg_disabled", "sen", "care_status", "childcare_resp", "fsm", "pupil_premium", "bank_acc", "career_goal", "cv", "mock_interview", "pt_job", "pro_email", "pro_voicemail","volunteering", "work_exp") # Note for report: CP/safeguarding concern column not present in this version of the demographics dataset.
+
+# Tidy 'cohort'
+v3_dem_r4w$cohort <- gsub("Class ", "", v3_dem_r4w$cohort)
+
+```
+
+## Step 2: Correct data types
+```{r}
+# Set specified columns to factor
+cols_to_factor <- setdiff(names(v3_dem_r4w), c("case_start", "case_end", "upn", "postcode"))
+v3_dem_r4w[cols_to_factor] <- lapply(v3_dem_r4w[cols_to_factor], factor)
+```
+
+```{r}
+# Correct date format 
+v3_dem_r4w$case_start <- as.Date(v3_dem_r4w$case_start, format = "%d/%m/%Y")
+v3_dem_r4w$case_end <- as.Date(v3_dem_r4w$case_end, format = "%d/%m/%Y")
+```
+
+## Step 3: Handling NA values
+```{r}
+# Assign NA to all blank values 
+na_replacement_cols <- c("cohort","case_status", "postcode", "city", "gender", "ethnicity", "first_lang", "reg_disabled", "sen", "care_status", "childcare_resp", "fsm", "pupil_premium", "bank_acc", "career_goal", "cv", "mock_interview", "pt_job", "pro_email", "pro_voicemail","volunteering", "work_exp")
+
+for(col in na_replacement_cols) {
+v3_dem_r4w[[col]][v3_dem_r4w[[col]] == ""] <- NA
+}
+```
+## Step 4: Assigning region based on postcode
+```{r}
+# Separate first part of postcode (using postcodes instead of city because better completeness)
+v3_dem_r4w$postcode <- sub(" .*", "", v3_dem_r4w$postcode)
+
+# Add new column for 'region' 
+v3_dem_r4w$region <- "unknown"
+
+# Categorise unique postcodes by region
+
+# Nottingham postcodes
+v3_dem_r4w$region[grep("^NG", v3_dem_r4w$postcode)] <- "Nottingham"
+
+# London postcodes
+london_postcodes <- c("EC1V", "N1", "E7", "N7", "E5", "EC", "EC1R", "EC2A", "NW3", "NW1", "BN27", "RM77JP", "AL10", "N13NU", "N13NU", "EN7", "E15", "SE3", "N5", "N13", "E9", "E1", "N5", "E14", "E2", "E8", "E3", "E1W", "E11", "E12", "N16", "UB7", "N15", "N4", "EC1Y", "IG11", "N19", "N11", "E11RY", "N42BD", "E149HZ", "E10", "E6", "E18", "EC1B", "N52RA")
+v3_dem_r4w$region[v3_dem_r4w$postcode %in% london_postcodes] <- "London"
+
+# Kent postcodes
+kent_postcodes <- c("TN24", "TN29", "CT21", "CT18", "CT20", "CT19", "CT14", "CT15", "TN28", "CT11", "ME158TY", "ME157DJ", "ME2","ME", "CT12", "CT10", "CT17", "CT16", "CT2", "CT3", "CT8", "CT7", "ME15", "ME3", "CT9", "ME17", "ME5", "TN26", "Ct94bt", "ME7", "ME8", "ME4", "ME1", "ME14", "DA1", "ME16")
+v3_dem_r4w$region[v3_dem_r4w$postcode %in% kent_postcodes] <- "Kent"
+
+# Rearrange columns
+v3_dem_r4w <- v3_dem_r4w %>%
+  select(1:5, 26, 6:25) 
+```
+
+```{r}
+unknown_region_rows <- v3_dem_r4w %>% filter(region == "unknown")
+# 114 rows
+```
+```{r}
+# Manually updating UPNs with missing regions
+upns_to_update <- c("B892211307023", "K206432514020", "F308207907005", "X886334908034", "M892291709005", "V892211311003") 
+regions_for_upns <- c("unknown", "Nottingham", "Nottingham", "Kent", "Nottingham", "Nottingham" ) 
+
+# Update the region based on UPNs
+v3_dem_r4w <- v3_dem_r4w %>%
+  mutate(region = case_when(
+    upn %in% upns_to_update ~ regions_for_upns[match(upn, upns_to_update)],
+    TRUE ~ region 
+  ))
+
+unknown_region_rows <- v3_dem_r4w %>% filter(region == "unknown")
+# 109 rows
+```
+
+# Tidying v3 followups dataset 
+## Step 1: Select and rename columns
+```{r}
+v3_followups <- v3_followups_raw %>%
+  select(`UPN.Number`, `Lookup.Class`, `Lookup.Case.Start`, `Activity.Date`, `Activity.Status`, `Follow.up.call.period`, `Education.Status`, `Employment.Status`) %>%
+  rename(
+    upn = `UPN.Number`,
+    class = `Lookup.Class`,
+    case_start = `Lookup.Case.Start`,
+    date = `Activity.Date`,
+    activity_status = `Activity.Status`,
+    followup_period = `Follow.up.call.period`,
+    education_status = `Education.Status`,
+    employment_status = `Employment.Status`
+  )
+
+print(v3_followups)
+```
+
+## Step 2: Handling missing values
+```{r}
+# Replace '#N/A' with NA in 'class' and 'case_start'
+na_replacement_followups <- c("class", "case_start")
+for (col in na_replacement_followups) {
+  v3_followups[[col]][v3_followups[[col]] == "#N/A"] <- NA
+}
+
+# Replace blank strings with NA in 'followup_period', 'education_status', and 'employment_status'
+na_replacement_followups_2 <- c("followup_period", "education_status", "employment_status")
+for (col in na_replacement_followups_2) {
+  v3_followups[[col]][v3_followups[[col]] == ""] <- NA
+}
+
+print(v3_followups)
+```
+
+## Step 3: Tidy columns
+```{r}
+# Tidy 'followup_period' column
+v3_followups <- v3_followups %>%
+  mutate(
+    followup_period = gsub(" month follow-up \\(", "-", followup_period),
+    followup_period = gsub(" \\d+", "", followup_period),
+    followup_period = gsub("\\)", "", followup_period)
+  )
+
+# Tidy 'class' column
+v3_followups$class <- gsub("Class ", "", v3_followups$class)
+
+print(v3_followups)
+```
+
+## Step 4: Change data types to factor and date
+```{r}
+v3_followups <- v3_followups %>%
+  mutate(
+    across(c(activity_status, followup_period, education_status, employment_status), as.factor),
+    case_start = as.Date(case_start, format = "%d/%m/%Y"),
+    date = as.Date(date, format = "%d/%m/%Y")
+  )
+
+print(v3_followups)
+```
+
+## Step 5: Change follow-up period for UPNs with class of 2021 (Y12-Q2 to Y12-Q1)
+```{r}
+# Get number of UPNs to update
+class_2021_upns_to_update <- v3_followups %>%
+  filter(!is.na(class) & !is.na(followup_period) & class == '2021' & followup_period == 'Y12-Q2') %>%
+  distinct(upn) %>%
+  nrow()
+
+print(class_2021_upns_to_update)  # Prints the number of unique UPNs to update
+
+# Count the number of replacements to be made
+num_replacements <- sum(!is.na(v3_followups$class) & !is.na(v3_followups$followup_period) & v3_followups$class == '2021' & v3_followups$followup_period == 'Y12-Q2')
+cat("Number of replacements to be made:", num_replacements, "\n")  # Prints the total number of replacements to be made
+
+# Replacement
+v3_followups$followup_period[v3_followups$class == '2021' & v3_followups$followup_period == 'Y12-Q2'] <- 'Y12-Q1'
+```
+
+# Filtering 
+## Step 1: Select most recent entry (based on 'date' column) for each UPN within follow-up periods
+```{r}
+initial_count <- nrow(v3_followups)  # Initial number of records
+
+v3_followups <- v3_followups %>%
+  group_by(upn, followup_period) %>%
+  slice_max(order_by = date, n = 1) %>%  # Keep the entry with the most recent date
+  ungroup()
+
+after_recent_entry_selection_count <- nrow(v3_followups)  # Number of records after step 1
+cat("Removed:", initial_count - after_recent_entry_selection_count, "records\n")  # Print the number of records removed
+
+```
+
+## Step 2: Remove duplicates with the same date for each UPN
+```{r}
+initial_count_step_2 <- nrow(v3_followups)  # Number of records before step 2
+
+v3_followups <- v3_followups %>%
+  group_by(upn, date) %>%
+  slice(1) %>%  # Keep only one entry if multiple entries have the same date for a UPN
+  ungroup()
+
+after_duplicate_removal_count <- nrow(v3_followups)  # Number of records after step 2
+cat("Removed:", initial_count_step_2 - after_duplicate_removal_count, "records\n")  # Output the number of records removed
+```
+
+## Step 3: Check for any remaining duplicates
+```{r}
+unique_check <- v3_followups %>%
+  group_by(upn, followup_period) %>%
+  summarise(n = n(), .groups = "drop")  # Count occurrences per UPN within follow-up periods
+
+duplicates_remaining <- unique_check %>%
+  filter(n > 1)  # Filter to find any UPN with more than one entry in the same follow-up period
+cat("Remaining duplicates:\n")
+print(duplicates_remaining)  # Output the remaining duplicates
+
+cat("Count of unique UPNs:", n_distinct(v3_followups$upn), "\n")  # Output the count of unique UPNs
+```
+
+# Step 4: Filter out entries with NA values in 'class' or 'case_start'
+```{r}
+initial_count_step_4 <- nrow(v3_followups)  # Number of records before step 4
+
+filtered_v3_followups <- v3_followups %>%
+  filter(!is.na(class) & !is.na(case_start))  # Keep only entries with non-NA values in 'class' and 'case_start'
+
+after_na_filter_count <- nrow(filtered_v3_followups)  # Count of records after step 4
+cat("Removed:", initial_count_step_4 - after_na_filter_count, "records\n")  # Output the count of records removed
+
+cat("Count of unique UPNs after filtering:", n_distinct(filtered_v3_followups$upn), "\n")  # Output the count of unique UPNs after filtering
+
+print(filtered_v3_followups)
+```
+
+# Assign follow-up status
+## Step 1: Define follow-up status logic and create new dataframe  
+```{r}
+v3_status <- filtered_v3_followups %>%
+  mutate(status = case_when(
+    education_status == "not in education" & employment_status == "not in employment" ~ "NEET",
+    (is.na(education_status) | education_status == "not in education") & 
+    (is.na(employment_status) | employment_status == "not in employment") ~ "Unknown",
+    TRUE ~ "EET"
+  )) %>%
+mutate(status = factor(status)) %>%
+  select(upn, class, followup_period, status) %>%
+  group_by(followup_period, status)
+
+print(v3_status)
+```
+
+## Step 2: Identify UPNs with a baseline record 
+```{r}
+# Select records where follow-up period is Y12-Q1
+upns_with_y12q1 <- v3_status %>%
+  filter(followup_period == "Y12-Q1") %>%
+  select(upn) %>%
+  group_by(followup_period, status, upn) %>%
+  distinct()
+
+print(upns_with_y12q1)
+```
+
+```{r}
+# Create a dataframe to include only those who have a y12-q1 record
+all_records_with_y12q1 <- v3_status %>%
+  filter(upn %in% upns_with_y12q1$upn)
+
+# Calculate status counts for each status at Y12-Q1
+status_counts_y12q1 <- v3_status %>%
+  filter(followup_period == "Y12-Q1") %>%
+  group_by(status) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  mutate(Percentage = (Count / sum(Count)) * 100)
+
+# Print new dataframes
+print(all_records_with_y12q1)
+print(status_counts_y12q1)
+```
