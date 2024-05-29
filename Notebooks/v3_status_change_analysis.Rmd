@@ -1,0 +1,173 @@
+---
+title: "Status Change Analysis"
+output: html_notebook
+---
+
+```{r setup, include=FALSE, cache=TRUE}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(readr)
+library(knitr)
+library(stringr)
+library(lubridate)
+library(here)
+
+# Set working directory to project root with 'here' package:
+knitr::opts_knit$set(root.dir = here::here())
+```
+
+# Preparing the reshaped dataset for plotting
+```{r}
+v3_status_percentages <- all_records_with_y12q1 %>%
+  # Include NA follow-up periods for the table
+  group_by(followup_period, status, .drop = FALSE) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  # Calculate total counts for each follow-up period, excluding NA percentages for the plot
+  group_by(followup_period) %>%
+  mutate(Total = sum(n), 
+         Percent = ifelse(is.na(followup_period), NA, n / Total * 100)) %>%
+  ungroup()
+
+# For plotting, exclude NA follow-up periods and NAs in status
+v3_status_percentages_for_plot <- v3_status_percentages %>%
+  filter(!is.na(followup_period) & !is.na(status))
+
+# Ensure the 'followup_period' column is a factor and set levels
+v3_status_percentages_for_plot$followup_period <- factor(v3_status_percentages_for_plot$followup_period, levels = unique(v3_status_percentages_for_plot$followup_period))
+
+v3_status_percentages_corrected
+v3_status_percentages_for_plot
+```
+
+# Plot: proportion of NEET, EET, and unknown across all follow-up points
+```{r}
+v3_status_plot <- ggplot(v3_status_percentages_for_plot, aes(x = followup_period, y = Percent, color = status, group = status)) +
+  geom_line(size = 1.5) +
+  labs(
+    title = "Proportion of NEET, EET, and unknown at all follow-up points",
+    x = "Follow-up period",
+    y = "Proportion (%)",
+    color = "Status"
+  ) +
+  theme_minimal() +
+  scale_y_continuous(breaks = seq(0, 100, by = 5), limits = c(0, 100)) +
+  scale_color_manual(
+    values = c("EET" = "forestgreen", "NEET" = "tomato1", "Unknown" = "grey")
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.title = element_blank()
+  )
+
+ggsave("v3_status_plot.png", width = 8, height = 4)
+v3_status_plot
+```
+
+# Status change analysis
+## EET
+```{r}
+# EET at Y12-Q1
+eet_upns_y12_q1 <- all_records_with_y12q1 %>%
+  filter(followup_period == "Y12-Q1", status == "EET") %>%
+  select(upn) %>%
+  distinct() %>%
+  pull(upn)
+
+# EET at Y13-Q1
+eet_status_at_y13_q1 <- all_records_with_y12q1 %>%
+  filter(upn %in% eet_upns_y12_q1, followup_period == "Y13-Q1") %>%
+  group_by(status) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  mutate(Percentage = round((Count / sum(Count)) * 100, 2))
+
+# EET at Y13-Q4
+eet_status_at_y13_q4 <- all_records_with_y12q1 %>%
+  filter(upn %in% eet_upns_y12_q1, followup_period == "Y13-Q4") %>%
+  group_by(status) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  mutate(Percentage = round((Count / sum(Count)) * 100, 2))
+
+# EET at Y14-Q2
+eet_status_at_y14_q2 <- all_records_with_y12q1 %>%
+  filter(upn %in% eet_upns_y12_q1, followup_period == "Y14-Q2") %>%
+  group_by(status) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  mutate(Percentage = round((Count / sum(Count)) * 100, 2))
+
+print(eet_status_at_y13_q1)
+print(eet_status_at_y13_q4)
+print(eet_status_at_y14_q2)
+
+```
+## NEET
+```{r}
+# NEET at Y12-Q1
+neet_upns_y12_q1 <- all_records_with_y12q1 %>%
+  filter(followup_period == "Y12-Q1", status == "NEET") %>%
+  select(upn) %>%
+  distinct() %>%
+  pull(upn)
+
+# NEET at Y13-Q1
+neet_status_at_y13_q1 <- all_records_with_y12q1 %>%
+  filter(upn %in% neet_upns_y12_q1, followup_period == "Y13-Q1") %>%
+  group_by(status) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  mutate(Percentage = round((Count / sum(Count)) * 100, 2))
+
+# NEET at Y13-Q4
+neet_status_at_y13_q4 <- all_records_with_y12q1 %>%
+  filter(upn %in% neet_upns_y12_q1, followup_period == "Y13-Q4") %>%
+  group_by(status) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  mutate(Percentage = round((Count / sum(Count)) * 100, 2))
+
+# NEET at Y14-Q2
+neet_status_at_y14_q2 <- all_records_with_y12q1 %>%
+  filter(upn %in% neet_upns_y12_q1, followup_period == "Y14-Q2") %>%
+  group_by(status) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  mutate(Percentage = round((Count / sum(Count)) * 100, 2))
+
+print(neet_status_at_y13_q1)
+print(neet_status_at_y13_q4)
+print(neet_status_at_y14_q2)
+```
+
+## Unknown
+```{r}
+# Unknown at Y12-Q1
+unknown_upns_y12_q1 <- all_records_with_y12q1 %>%
+  filter(followup_period == "Y12-Q1", status == "Unknown") %>%
+  select(upn) %>%
+  distinct() %>%
+  pull(upn)
+
+# Unknown at Y13-Q1
+unknown_status_at_y13_q1 <- all_records_with_y12q1 %>%
+  filter(upn %in% unknown_upns_y12_q1, followup_period == "Y13-Q1") %>%
+  group_by(status) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  mutate(Percentage = round((Count / sum(Count)) * 100, 2))
+
+# Unknown at Y13-Q4
+unknown_status_at_y13_q4 <- all_records_with_y12q1 %>%
+  filter(upn %in% unknown_upns_y12_q1, followup_period == "Y13-Q4") %>%
+  group_by(status) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  mutate(Percentage = round((Count / sum(Count)) * 100, 2))
+
+# Unknown at Y14-Q2
+unknown_status_at_y14_q2 <- all_records_with_y12q1 %>%
+  filter(upn %in% unknown_upns_y12_q1, followup_period == "Y14-Q2") %>%
+  group_by(status) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  mutate(Percentage = round((Count / sum(Count)) * 100, 2))
+
+print(unknown_status_at_y13_q1)
+print(unknown_status_at_y13_q4)
+print(unknown_status_at_y14_q2)
+```
+
+
