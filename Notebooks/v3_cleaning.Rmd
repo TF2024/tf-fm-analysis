@@ -127,13 +127,14 @@ v3_dem_r4w <- v3_dem_r4w %>%
 ```
 
 ```{r}
+# View rows with unknown region to check if they can be populated (based on other columns)
 unknown_region_rows <- v3_dem_r4w %>% filter(region == "unknown")
-# 114 rows
+print(unknown_region_rows)
 ```
 ```{r}
 # Manually updating UPNs with missing regions
-upns_to_update <- c("B892211307023", "K206432514020", "F308207907005", "X886334908034", "M892291709005", "V892211311003") 
-regions_for_upns <- c("unknown", "Nottingham", "Nottingham", "Kent", "Nottingham", "Nottingham" ) 
+upns_to_update <- c("UPN1", "UPN2", "UPN3", "UPN4", "UPN5")
+regions_for_upns <- c("Nottingham", "Kent", "London", "Birmingham", "Manchester")
 
 # Update the region based on UPNs
 v3_dem_r4w <- v3_dem_r4w %>%
@@ -142,8 +143,9 @@ v3_dem_r4w <- v3_dem_r4w %>%
     TRUE ~ region 
   ))
 
+# View updated rows with unknown region
 unknown_region_rows <- v3_dem_r4w %>% filter(region == "unknown")
-# 109 rows
+print(unknown_region_rows)
 ```
 
 # Tidying v3 followups dataset 
