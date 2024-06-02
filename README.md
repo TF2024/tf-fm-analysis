@@ -1,5 +1,5 @@
 # tf-fm-analysis
-ThinkForward FutureMe analysis of historical data.
+This repository contains the code used for the analysis of data for ThinkForward's FutureMe programme. The findings from this analysis are described in the report produced by Dartington Service Design Lab in March 20234.
 
 ## Getting started 
 * Clone the repository.
