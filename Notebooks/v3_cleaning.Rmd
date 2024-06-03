@@ -133,8 +133,8 @@ print(unknown_region_rows)
 ```
 ```{r}
 # Manually updating UPNs with missing regions
-upns_to_update <- c("UPN1", "UPN2", "UPN3", "UPN4", "UPN5")
-regions_for_upns <- c("Nottingham", "Kent", "London", "Birmingham", "Manchester")
+upns_to_update <- c("UPN1", "UPN2", "UPN3", "UPN4", "UPN5") # Example UPNs
+regions_for_upns <- c("Nottingham", "Kent", "London", "Birmingham", "Manchester") # Example regions
 
 # Update the region based on UPNs
 v3_dem_r4w <- v3_dem_r4w %>%
