@@ -3,7 +3,7 @@ This repository contains the code used for the analysis of data for ThinkForward
 
 ## Getting started 
 * Clone the repository.
-* Populate the folder `Datasets` in order for the code to run, according to the datasets specified under each notebook below.
+* Populate the folder `Datasets` in order for the code to run, according to the datasets specified under each notebook in the section below.
 * Run the notebooks in the order specified below. 
 
 ## Notebooks
