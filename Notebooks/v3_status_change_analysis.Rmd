@@ -3,7 +3,7 @@ title: "Status Change Analysis"
 output: html_notebook
 ---
 
-```
+```{r}
 # Ensure packages are installed before loading
 library(dplyr)
 library(ggplot2)
