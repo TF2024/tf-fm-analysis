@@ -7,6 +7,7 @@ output: html_notebook
 # Ensure packages are installed before loading
 library(here)
 library(dplyr)
+library(knitr)
 
 # Set working directory to project root with 'here' package:
 knitr::opts_knit$set(root.dir = here::here())

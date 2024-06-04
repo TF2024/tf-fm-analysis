@@ -3,14 +3,11 @@ title: "Status Change Analysis"
 output: html_notebook
 ---
 
-```{r setup, include=FALSE, cache=TRUE}
+```
+# Ensure packages are installed before loading
 library(dplyr)
 library(ggplot2)
-library(tidyr)
-library(readr)
 library(knitr)
-library(stringr)
-library(lubridate)
 library(here)
 
 # Set working directory to project root with 'here' package:
