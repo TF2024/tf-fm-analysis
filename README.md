@@ -6,6 +6,10 @@ This repository contains the code used for the analysis of data for ThinkForward
 * Populate the folder `Datasets` in order for the code to run, according to the datasets specified under each notebook in the section below.
 * Run the notebooks in the order specified below. 
 
+## R setup
+* Each notebook loads only the packages it requires. Ensure that packages are installed first.
+* The `here` package is used to set the working directory to the project root, ensuring consistent file paths. 
+
 ## Notebooks
 
 ### v3_cleaning.Rmd 
