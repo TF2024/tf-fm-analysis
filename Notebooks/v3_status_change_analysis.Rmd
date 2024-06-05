@@ -33,8 +33,8 @@ v3_status_percentages_for_plot <- v3_status_percentages %>%
 # Ensure the 'followup_period' column is a factor and set levels
 v3_status_percentages_for_plot$followup_period <- factor(v3_status_percentages_for_plot$followup_period, levels = unique(v3_status_percentages_for_plot$followup_period))
 
-v3_status_percentages_corrected
 v3_status_percentages_for_plot
+v3_status_percentages
 ```
 
 # Plot: proportion of NEET, EET, and unknown across all follow-up points

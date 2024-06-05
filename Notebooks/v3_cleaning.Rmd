@@ -22,7 +22,6 @@ n_distinct(v3_dem_r4w_raw$Contacts.UPN.Number)
 # 'Follow-up with Class & Start Date'
 v3_followups_raw <- read.csv("../Datasets/v3_followups.csv") 
 n_distinct(v3_followups_raw$UPN.Number)
-
 ```
 
 # Tidying the 'demographics & R4W' dataset
