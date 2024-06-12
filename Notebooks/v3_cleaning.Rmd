@@ -4,10 +4,14 @@ output: html_notebook
 
 ---
 ```{r}
-# Ensure packages are installed before loading
-library(here)
-library(dplyr)
-library(knitr)
+# Create a character vector of the package names
+packages <- c("here", "dplyr", "knitr")
+
+# Install the packages
+install.packages(packages)
+
+# Load the packages
+lapply(packages, library, character.only = TRUE)
 
 # Set working directory to project root with 'here' package:
 knitr::opts_knit$set(root.dir = here::here())
