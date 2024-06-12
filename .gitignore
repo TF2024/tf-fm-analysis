@@ -54,3 +54,6 @@ rsconnect/
 
 # Everything in Datasets folder 
 Datasets/**.*
+
+# Everything in the Graphs folder
+Graphs/**.*

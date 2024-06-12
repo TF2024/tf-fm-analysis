@@ -4,14 +4,23 @@ output: html_notebook
 ---
 
 ```{r}
-# Ensure packages are installed before loading
-library(dplyr)
-library(ggplot2)
-library(knitr)
-library(here)
+# Create a character vector of the package names
+packages <- c("dplyr", "ggplot2", "knitr", "here")
+
+# Install the packages (if not already installed)
+installed_packages <- rownames(installed.packages())
+for (pkg in packages) {
+  if (!pkg %in% installed_packages) {
+    install.packages(pkg)
+  }
+}
+
+# Load the packages
+lapply(packages, library, character.only = TRUE)
 
 # Set working directory to project root with 'here' package:
 knitr::opts_knit$set(root.dir = here::here())
+
 ```
 
 # Preparing the reshaped dataset for plotting
@@ -57,7 +66,7 @@ v3_status_plot <- ggplot(v3_status_percentages_for_plot, aes(x = followup_period
     legend.title = element_blank()
   )
 
-ggsave("v3_status_plot.png", width = 8, height = 4)
+ggsave("../Graphs/v3_status_plot.png", width = 8, height = 4)
 v3_status_plot
 ```
 
