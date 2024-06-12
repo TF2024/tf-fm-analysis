@@ -25,5 +25,4 @@ Contains the code for plotting the follow-up status graphs and producing the sta
 ## Outputs
 
 ### Graphs
-
 Some of the notebooks will output .png images to the Graphs folder.
