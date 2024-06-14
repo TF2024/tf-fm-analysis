@@ -17,19 +17,16 @@ for (pkg in packages) {
 
 # Load the packages
 lapply(packages, library, character.only = TRUE)
-
-# Set working directory to project root with 'here' package:
-knitr::opts_knit$set(root.dir = here::here())
 ```
 
 # Import datasets and check UPNs
 ```{r}
 # 'Participants - Demographic & R4W Passport Data' (these were provided as a single dataset)
-v3_dem_r4w_raw <- read.csv("../Datasets/v3_dem_r4w.csv") 
+v3_dem_r4w_raw <- read.csv(here("Datasets","v3_dem_r4w.csv"))
 n_distinct(v3_dem_r4w_raw$Contacts.UPN.Number)
 
 # 'Follow-up with Class & Start Date'
-v3_followups_raw <- read.csv("../Datasets/v3_followups.csv") 
+v3_followups_raw <- read.csv(here("Datasets", "v3_followups.csv")) 
 n_distinct(v3_followups_raw$UPN.Number)
 ```
 
