@@ -27,8 +27,10 @@ v3_status_percentages <- all_records_with_y12q1 %>%
   summarise(n = n(), .groups = "drop") %>%
   # Calculate total counts for each follow-up period, excluding NA percentages for the plot
   group_by(followup_period) %>%
-  mutate(Total = sum(n), 
-         Percent = ifelse(is.na(followup_period), NA, n / Total * 100)) %>%
+  mutate(
+    Total = sum(n),
+    Percent = ifelse(is.na(followup_period), NA, n / Total * 100)
+  ) %>%
   ungroup()
 
 # For plotting, exclude NA follow-up periods and NAs in status
@@ -100,7 +102,6 @@ eet_status_at_y14_q2 <- all_records_with_y12q1 %>%
 print(eet_status_at_y13_q1)
 print(eet_status_at_y13_q4)
 print(eet_status_at_y14_q2)
-
 ```
 ## NEET
 ```{r}
@@ -171,5 +172,3 @@ print(unknown_status_at_y13_q1)
 print(unknown_status_at_y13_q4)
 print(unknown_status_at_y14_q2)
 ```
-
-
