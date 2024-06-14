@@ -1,0 +1,162 @@
+---
+title: "v3 coaching attendance analysis"
+output: html_notebook
+---
+
+
+```{r setup, include=FALSE, cache=TRUE}
+packages <- c("dplyr", "ggplot2", "tidyr", "readr", "knitr", "stringr", "lubridate", "here")
+
+# Install the packages (if not already installed)
+installed_packages <- rownames(installed.packages())
+for (pkg in packages) {
+  if (!pkg %in% installed_packages) {
+    install.packages(pkg)
+  }
+}
+
+# Load the packages
+lapply(packages, library, character.only = TRUE)
+```
+
+```{r}
+attendance_11s_raw <- read.csv(here("Datasets", "1_1attendance.csv"))
+n_distinct(attendance_11s_raw$external_identifier) # 2708
+head(attendance_11s_raw)
+```
+
+
+```{r}
+# Filter for status 'attended'
+attendance_11s <- attendance_11s_raw %>%
+  filter(status_id == 2) %>%
+  # Select and rename columns
+  select(activity_date_time, external_identifier) %>%
+  rename(upn = external_identifier)
+
+nrow(attendance_11s) # 43225
+n_distinct(attendance_11s$upn) # 2698
+```
+```{r}
+# Check for and remove rows with missing values
+sum(is.na(attendance_11s$activity_date_time))
+sum(is.na(attendance_11s$upn))
+```
+```{r}
+# Correct date format and type
+attendance_11s$date_only <- sub(" .*", "", attendance_11s$activity_date_time)
+attendance_11s$date_only <- as.Date(attendance_11s$date_only, format = "%d/%m/%Y")
+
+# Drop the old column and rename
+attendance_11s <- attendance_11s %>%
+  select(-activity_date_time) %>%
+  rename(date = date_only)
+```
+
+```{r}
+attendance_11s
+# Get start date from demographics or follow-ups
+```
+```{r}
+# Comparing attendance/demographics dataset UPNs to attendance dataset to see which one has more matches (to retrieve start date)
+
+upns_11s <- unique(attendance_11s$upn)
+upns_followups <- unique(filtered_v3_followups$upn)
+upns_demographics <- unique(v3_dem_r4w$upn)
+```
+
+```{r}
+# Common UPNs between 1:1 attendance and followups
+common_upns_11s_followups <- intersect(upns_11s, upns_followups)
+length(common_upns_11s_followups)
+
+# Common UPNs between 1:1s and demographics
+common_upns_11s_demographics <- intersect(upns_11s, upns_demographics)
+length(common_upns_11s_demographics)
+```
+
+```{r}
+joined_11s <- attendance_11s %>%
+  left_join(v3_dem_r4w %>% select(upn, case_start, cohort), by = "upn")
+
+# Drop rows without a start date
+joined_11s <- joined_11s %>%
+  filter(!is.na(case_start))
+
+joined_11s
+n_distinct(joined_11s$upn)
+```
+
+```{r}
+# Get count of 1:1s
+source(here("Scripts", "v3_simplified_find_year.R"))
+
+# Apply function
+prog_year <- mapply(v3_simplified_find_year, joined_11s$date, joined_11s$case_start, SIMPLIFY = FALSE)
+
+# Append prog year as new col
+joined_11s$prog_year <- unlist(prog_year)
+
+# Range of programme years
+range(joined_11s$prog_year)
+joined_11s
+```
+
+```{r}
+# Table with upn, cohort, and count per programme year
+all_prog_years_11s <- joined_11s %>%
+  group_by(upn, cohort, prog_year) %>%
+  summarise(count_11s = n(), .groups = "drop")
+
+# Join with follow-up status
+status_11s <- all_records_with_y12q1 %>%
+  select(upn, followup_period, status) %>%
+  inner_join(all_prog_years_11s, by = "upn")
+
+status_11s
+n_distinct(status_11s$upn)
+
+# Descriptives for 1:1s - all years
+counts_11s_stats <- status_11s %>%
+  group_by(prog_year) %>%
+  summarise(
+    total_records = n(),
+    unique_upns = n_distinct(upn),
+    min_count_11s = min(count_11s),
+    max_count_11s = max(count_11s),
+    sd_count_11s = sd(count_11s),
+    avg_count_11s = mean(count_11s)
+  )
+
+print(counts_11s_stats)
+```
+
+
+```{r}
+# Total for years 1, 2, and 3
+programme_promise_11s <- c("1" = 8, "2" = 9, "3" = 7, "4" = 8, "5" = 9)
+programme_years <- 1:5
+```
+
+```{r}
+pre_16_11s <- status_11s %>%
+  filter(prog_year %in% c(1, 2, 3)) %>%
+  group_by(upn) %>%
+  summarise(pre_16_total_11s = n()) %>%
+  mutate(proportion_11s = pre_16_total_11s / 24 * 100)
+
+pre_16_11s
+```
+
+```{r}
+ggplot(pre_16_11s, aes(x = proportion_11s)) +
+  geom_density(fill = "forestgreen", alpha = 0.5) +
+  theme_minimal() +
+  labs(title = "Density of 1:1 completion proportions", x = "Proportion met", y = "Density")
+```
+```{r}
+ggplot(pre_16_11s, aes(x = proportion_11s)) +
+  geom_histogram(binwidth = 30, fill = "skyblue") +
+  theme_minimal() +
+  labs(title = "Distribution of 1:1 completion proportions", x = "Proportion met", y = "Frequency (count)")
+```
