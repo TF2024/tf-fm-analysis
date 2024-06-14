@@ -1,0 +1,121 @@
+---
+title: "v3 group attendance analysis"
+output: html_notebook
+---
+
+
+```{r setup, include=FALSE, cache=TRUE}
+packages <- c("dplyr", "ggplot2", "tidyr", "readr", "knitr", "stringr", "lubridate", "here")
+
+# Install the packages (if not already installed)
+installed_packages <- rownames(installed.packages())
+for (pkg in packages) {
+  if (!pkg %in% installed_packages) {
+    install.packages(pkg)
+  }
+}
+
+# Load the packages
+lapply(packages, library, character.only = TRUE)
+```
+
+```{r}
+group_coaching_raw <- read.csv(here("Datasets", "group_coaching.csv"))
+```
+
+```{r}
+# Filter for status 'attended'
+group_coaching_summary <- group_coaching_raw %>%
+  filter(status_id == 2) %>%
+# Select and rename columns
+  select(activity_date_time, external_identifier) %>%
+  rename(upn = external_identifier)
+
+```
+
+```{r}
+# Check for and remove rows with missing values in activity date or upn
+sum(is.na(group_coaching_summary$activity_date_time))
+sum(is.na(group_coaching_summary$upn))
+group_coaching_summary <- group_coaching_summary %>% drop_na(upn)
+```
+
+```{r}
+# Correct date format and type
+group_coaching_summary$date_only <- sub(" .*", "", group_coaching_summary$activity_date_time)
+group_coaching_summary$date_only <- as.Date(group_coaching_summary$date_only, format = "%d/%m/%Y")
+
+# Drop the old column and rename 
+group_coaching_summary <- group_coaching_summary %>%
+  select(-activity_date_time) %>%
+  rename(date = date_only)
+
+n_distinct(group_coaching_summary$upn) #3038
+```
+
+```{r}
+# Keep rows with a Y12-Q1 record
+common_upns_group_followups <- intersect(unique(group_coaching_summary$upn), unique(filtered_v3_followups$upn))
+
+# Retrieve start dates
+joined_group_coaching <- group_coaching_summary %>%
+  filter(upn %in% common_upns_group_followups) %>%
+  left_join(v3_dem_r4w %>% select(upn, case_start, cohort), by = "upn") %>%
+  filter(!is.na(case_start))
+
+
+# Get prog year and append to df 
+prog_year_group <- mapply(v3_simplified_find_year, joined_group_coaching$date, joined_group_coaching$case_start, SIMPLIFY = FALSE)
+joined_group_coaching$prog_year <- unlist(prog_year_group)
+
+joined_group_coaching
+range(joined_group_coaching$prog_year)
+```
+
+```{r}
+# Get unique dates
+unique_sessions_group <- joined_group_coaching %>%
+  group_by(upn, prog_year) %>%
+  summarise(unique_dates_count = n_distinct(date), .groups = 'drop')
+unique_sessions_group
+
+
+# Descriptives for group coaching - all years 
+counts_group_stats <- unique_sessions_group %>%
+  group_by(prog_year) %>%
+  summarise(
+    total_records = n(), 
+    unique_upns = n_distinct(upn), 
+    min_count_group = min(unique_dates_count),
+    max_count_group = max(unique_dates_count),
+    sd_count_group = sd(unique_dates_count),
+    avg_count_group = mean(unique_dates_count)
+  )
+
+print(counts_group_stats)
+```
+```{r}
+pre_16_group <- unique_sessions_group %>%
+  filter(prog_year %in% c(2, 3)) %>%
+  group_by(upn) %>%
+  summarise(pre_16_total_group = sum(unique_dates_count)) %>%
+  mutate(proportion_group = pre_16_total_group / 8 * 100)
+pre_16_group
+
+range(pre_16_group$proportion_group)
+```
+
+```{r}
+# Plot density of group coaching proportions
+ggplot(pre_16_group, aes(x = proportion_group)) +
+  geom_density(fill = "forestgreen", alpha = 0.5) +
+  theme_minimal() +
+  labs(title = "Density of group coaching completion proportions", x = "Proportion met", y = "Density")
+```
+```{r}
+# Plot distribution of group coaching completion proportions
+ggplot(pre_16_group, aes(x = proportion_group)) +
+  geom_histogram(binwidth = 30, fill = "skyblue") + 
+  theme_minimal() +
+  labs(title = "Distribution of group coaching completion proportions", x = "Proportion met", y = "Frequency (count)")
+```
