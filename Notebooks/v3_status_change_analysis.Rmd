@@ -17,10 +17,6 @@ for (pkg in packages) {
 
 # Load the packages
 lapply(packages, library, character.only = TRUE)
-
-# Set working directory to project root with 'here' package:
-knitr::opts_knit$set(root.dir = here::here())
-
 ```
 
 # Preparing the reshaped dataset for plotting
