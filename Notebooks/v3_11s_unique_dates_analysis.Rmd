@@ -1,5 +1,5 @@
 ---
-title: "v3 1:1 coaching attendance analysis"
+title: "v3 1:1 coaching attendance analysis: unique dates"
 output: html_notebook
 ---
 
@@ -82,6 +82,7 @@ length(common_upns_11s_demographics)
 ```
 
 ```{r}
+# Joining to get start date and cohort
 joined_11s <- attendance_11s %>%
   filter(upn %in% common_upns_11s_followups) %>% # Adjust based on common UPNs
   left_join(v3_dem_r4w %>% select(upn, case_start, cohort), by = "upn") %>%
@@ -142,7 +143,7 @@ n_distinct(multiple_entries_per_date$upn)
 ```
 
 ```{r}
-pre_16_11s <- unique_sessions_11s %>%
+unique_pre_16_11s <- unique_sessions_11s %>%
   filter(prog_year %in% c(1, 2, 3)) %>%
   group_by(upn) %>%
   summarise(pre_16_total_11s = sum(unique_dates_count)) %>%
@@ -150,13 +151,13 @@ pre_16_11s <- unique_sessions_11s %>%
 ```
 
 ```{r}
-ggplot(pre_16_11s, aes(x = proportion_11s)) +
+ggplot(unique_pre_16_11s, aes(x = proportion_11s)) +
   geom_density(fill = "forestgreen", alpha = 0.5) +
   theme_minimal() +
   labs(title = "Density of 1:1 completion proportions", x = "Proportion met", y = "Density")
 ```
 ```{r}
-ggplot(pre_16_11s, aes(x = proportion_11s)) +
+ggplot(unique_pre_16_11s, aes(x = proportion_11s)) +
   geom_histogram(binwidth = 30, fill = "skyblue") +
   theme_minimal() +
   labs(title = "Distribution of 1:1 completion proportions", x = "Proportion met", y = "Frequency (count)")

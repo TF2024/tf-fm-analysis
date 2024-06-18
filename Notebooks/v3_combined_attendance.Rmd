@@ -22,7 +22,7 @@ lapply(packages, library, character.only = TRUE)
 # Combined thresholds
 ```{r}
 # Join 1:1 and group coaching counts
-combined_pre_16 <- full_join(pre_16_11s, pre_16_group, by = "upn")
+combined_pre_16 <- full_join(unique_pre_16_11s, pre_16_group, by = "upn")
 combined_pre_16
 sum(is.na(combined_pre_16$proportion_group))
 ```
@@ -189,9 +189,6 @@ combined_NEET_plot <- ggplot(pre_16s_combined_NEET, aes(x = followup_period, y =
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text())
-
-pre_16s_combined_NEET
-combined_NEET_plot
 ```
 
 ### Combined completion: Unknown
