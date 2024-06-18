@@ -19,6 +19,7 @@ for (pkg in packages) {
 lapply(packages, library, character.only = TRUE)
 ```
 
+# Combined thresholds
 ```{r}
 # Join 1:1 and group coaching counts
 combined_pre_16 <- full_join(pre_16_11s, pre_16_group, by = "upn")
@@ -85,6 +86,7 @@ pre_16s_all_proportions_thresholds <- pre_16_all %>%
 pre_16s_all_proportions_thresholds
 ```
 
+# Merge with follow-up status
 ```{r}
 # Merge with follow-up status
 pre_16s_all_status <- pre_16s_all_proportions_thresholds %>% left_join(all_records_with_y12q1, by = "upn")
@@ -100,7 +102,7 @@ pre_16s_excl_na <- pre_16s_all_status %>%
   filter(followup_period %in% c("Y12-Q1", "Y13-Q1", "Y13-Q4", "Y14-Q2"))
 n_distinct(pre_16s_excl_na$upn)
 ```
-
+# Prepare data for plotting
 ```{r}
 # Define category labels
 pre_16s_excl_na$category_11s <- factor(pre_16s_excl_na$category_11s,
@@ -374,7 +376,7 @@ NEET_plot_group <- ggplot(pre_16s_group_NEET, aes(x = followup_period, y = propo
   theme(axis.text.x = element_text())
 ```
 
-### Group coaching completion: NEET
+### Group coaching completion: Unknown
 ```{r}
 # Unknown - group coaching: total count
 pre_16s_group_unknown <- pre_16s_excl_na %>%

@@ -22,7 +22,23 @@ Cleaning and reshaping the demographics & Ready4Work Passport activity dataset (
 ### v3_status_change_analysis.Rmd
 Contains the code for plotting the follow-up status graphs and producing the status change table. Requires `v3_cleaning.Rmd` to run first.
 
+### v3_11s_analysis.Rmd
+Prepares the 1:1 coaching dataset for analysis. Exploratory plotting of 1:1 sessions counted as unique dates. Requires `v3_cleaning.Rmd` to run first.
+
+#### Required datasets:
+* `1:1attendance.csv`
+### v3_unique_11s_analysis.Rmd
+Prepares the 1:1 coaching dataset for analysis. Exploratory plotting of 1:1 sessions counted as unique entries. Requires `v3_cleaning.Rmd` to run first.
+* `1:1attendance.csv`
+
+### v3_group_analysis.Rmd
+Prepares the group coaching dataset for analysis. Exploratory plotting of group coaching sessions. Requires `v3_cleaning.Rmd` to run first.
+
+### v3_combined_attendande.Rmd
+Joins 1:1 and group coaching counts and proportions. Calculates the combined completion proportions. Merges completion dataset with follow-up status. Produces plots for the combined completion by status, and separate plots for 1:1 and group coaching. Requires `v3_cleaning.Rmd` to run first.
+
 ## Outputs
+A folder for saving outputs.
 
 ### Graphs
 Some of the notebooks will output .png images to the Graphs folder.
