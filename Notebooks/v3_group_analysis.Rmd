@@ -20,6 +20,7 @@ lapply(packages, library, character.only = TRUE)
 ```
 
 ```{r}
+# Load the raw data
 group_coaching_raw <- read.csv(here("Datasets", "group_coaching.csv"))
 ```
 
@@ -30,7 +31,6 @@ group_coaching_summary <- group_coaching_raw %>%
 # Select and rename columns
   select(activity_date_time, external_identifier) %>%
   rename(upn = external_identifier)
-
 ```
 
 ```{r}
@@ -54,33 +54,40 @@ n_distinct(group_coaching_summary$upn) #3038
 ```
 
 ```{r}
-# Keep rows with a Y12-Q1 record
+# Find common UPNs between group coaching and follow-up dataset to keep only participants with a Y12-Q1 record
 common_upns_group_followups <- intersect(unique(group_coaching_summary$upn), unique(filtered_v3_followups$upn))
 
-# Retrieve start dates
+# Retrieve start dates from the 'Demographics & R4W' dataset
 joined_group_coaching <- group_coaching_summary %>%
   filter(upn %in% common_upns_group_followups) %>%
   left_join(v3_dem_r4w %>% select(upn, case_start, cohort), by = "upn") %>%
   filter(!is.na(case_start))
 
+```
 
-# Get prog year and append to df 
+```{r}
+# Apply function to find programme year
+source(here("Scripts", "v3_simplified_find_year.R"))
+
 prog_year_group <- mapply(v3_simplified_find_year, joined_group_coaching$date, joined_group_coaching$case_start, SIMPLIFY = FALSE)
 joined_group_coaching$prog_year <- unlist(prog_year_group)
 
 joined_group_coaching
+
+# Check that range of years is correct (1-5)
 range(joined_group_coaching$prog_year)
 ```
 
+# Descriptive statistics for group coaching
 ```{r}
-# Get unique dates
+# Get count of unique dates for each UPN and programme year
 unique_sessions_group <- joined_group_coaching %>%
   group_by(upn, prog_year) %>%
   summarise(unique_dates_count = n_distinct(date), .groups = 'drop')
 unique_sessions_group
+range(unique_sessions_group$unique_dates_count)
 
-
-# Descriptives for group coaching - all years 
+# Descriptives for group coaching across all years 
 counts_group_stats <- unique_sessions_group %>%
   group_by(prog_year) %>%
   summarise(
@@ -91,10 +98,11 @@ counts_group_stats <- unique_sessions_group %>%
     sd_count_group = sd(unique_dates_count),
     avg_count_group = mean(unique_dates_count)
   )
-
 print(counts_group_stats)
 ```
+
 ```{r}
+# Proportions for group coaching for programme years 2 and 3 (pre-16)4
 pre_16_group <- unique_sessions_group %>%
   filter(prog_year %in% c(2, 3)) %>%
   group_by(upn) %>%
@@ -105,6 +113,7 @@ pre_16_group
 range(pre_16_group$proportion_group)
 ```
 
+# Plots
 ```{r}
 # Plot density of group coaching proportions
 ggplot(pre_16_group, aes(x = proportion_group)) +

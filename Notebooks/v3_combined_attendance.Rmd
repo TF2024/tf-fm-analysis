@@ -37,10 +37,10 @@ combined_pre_16
 ```
 
 ```{r}
+# Create df with proportions only
 pre_16_all <- combined_pre_16 %>%
   select(upn, proportion_11s, proportion_group, combined_proportion)
 pre_16_all
-sum(is.na(pre_16_all$proportion_group))
 ```
 
 ```{r}
@@ -75,12 +75,14 @@ pre_16s_all_proportions_thresholds <- pre_16_all %>%
       TRUE ~ NA_integer_
     )
   ) %>%
-  # Convert categories to factor
+# Convert categories to factor
   mutate(
     category_11s = factor(category_11s, levels = 1:6),
     category_group = factor(category_group, levels = 1:6),
     category_combined = factor(category_combined, levels = 1:6)
   )
+
+pre_16s_all_proportions_thresholds
 ```
 
 ```{r}
@@ -89,14 +91,17 @@ pre_16s_all_status <- pre_16s_all_proportions_thresholds %>% left_join(all_recor
 n_distinct(pre_16s_all_status$upn)
 pre_16s_all_status
 ```
+
 ```{r}
 # For combined and 1:1 analyses, exclude UPNs where combined proportion is NA (i.e. group coaching record is missing) - total is 516
-
 pre_16s_excl_na <- pre_16s_all_status %>%
   filter(!is.na(combined_proportion)) %>%
+  # Select the follow-up periods of interest
   filter(followup_period %in% c("Y12-Q1", "Y13-Q1", "Y13-Q4", "Y14-Q2"))
 n_distinct(pre_16s_excl_na$upn)
+```
 
+```{r}
 # Define category labels
 pre_16s_excl_na$category_11s <- factor(pre_16s_excl_na$category_11s,
   levels = 1:6,
@@ -114,6 +119,20 @@ pre_16s_excl_na$category_combined <- factor(pre_16s_excl_na$category_combined,
 )
 pre_16s_excl_na
 ```
+```{r}
+# Get the total number of unique UPNs per follow-up period
+total_upns_per_followup <- pre_16s_excl_na %>%
+  group_by(followup_period) %>%
+  summarise(total_unique_upns = n_distinct(upn), .groups = "drop")
+
+# Print the result
+print(total_upns_per_followup)
+pre_16s_excl_na
+```
+
+# Plots 
+## Plotting combined completion rates
+### EET
 ```{r}
 # Total unique UPNs per follow-up period
 pre_16s_combined_EET <- pre_16s_excl_na %>%
@@ -141,11 +160,9 @@ combined_EET_plot <- ggplot(pre_16s_combined_EET, aes(x = followup_period, y = p
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text())
-
-pre_16s_combined_EET
-combined_EET_plot
 ```
 
+### NEET
 ```{r}
 # Total unique UPNs per follow-up period
 pre_16s_combined_NEET <- pre_16s_excl_na %>%
@@ -175,8 +192,10 @@ combined_NEET_plot <- ggplot(pre_16s_combined_NEET, aes(x = followup_period, y =
   theme(axis.text.x = element_text())
 
 pre_16s_combined_NEET
+combined_NEET_plot
 ```
 
+### Unknown
 ```{r}
 # Total unique UPNs per follow-up period
 pre_16s_combined_unknown <- pre_16s_excl_na %>%
@@ -204,9 +223,10 @@ combined_unknown_plot <- ggplot(pre_16s_combined_unknown, aes(x = followup_perio
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text())
-
-pre_16s_combined_unknown
 ```
+
+## Plotting 1:1 completion rates
+### EET
 ```{r}
 # Total unique UPNs per follow-up period
 pre_16s_11s_EET <- pre_16s_excl_na %>%
@@ -234,11 +254,9 @@ EET_plot_11s <- ggplot(pre_16s_11s_EET, aes(x = followup_period, y = proportion,
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text())
-
-pre_16s_11s_EET
-EET_plot_11s
 ```
 
+### NEET
 ```{r}
 # Total unique UPNs per follow-up period
 pre_16s_11s_NEET <- pre_16s_excl_na %>%
@@ -266,12 +284,9 @@ NEET_plot_11s <- ggplot(pre_16s_11s_NEET, aes(x = followup_period, y = proportio
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text())
-
-pre_16s_11s_EET
-NEET_plot_11s
 ```
 
-
+### Unknown
 ```{r}
 # Total unique UPNs per follow-up period
 pre_16s_11s_unknown <- pre_16s_excl_na %>%
@@ -299,14 +314,10 @@ unknown_plot_11s <- ggplot(pre_16s_11s_unknown, aes(x = followup_period, y = pro
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text())
-
-pre_16s_11s_unknown
-unknown_plot_11s
-```
-```{r}
-pre_16s_excl_na
 ```
 
+## Plotting group coaching completion 
+### EET
 ```{r}
 # EET - group coaching: total count
 pre_16s_group_EET <- pre_16s_excl_na %>%
@@ -334,10 +345,9 @@ EET_plot_group <- ggplot(pre_16s_group_EET, aes(x = followup_period, y = proport
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text())
-
-pre_16s_group_EET
-EET_plot_group
 ```
+
+### NEET
 ```{r}
 # NEET - group coaching: total count
 pre_16s_group_NEET <- pre_16s_excl_na %>%
@@ -365,10 +375,9 @@ NEET_plot_group <- ggplot(pre_16s_group_NEET, aes(x = followup_period, y = propo
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text())
-
-pre_16s_group_NEET
-NEET_plot_group
 ```
+
+### Unknown
 ```{r}
 # Unknown - group coaching: total count
 pre_16s_group_unknown <- pre_16s_excl_na %>%
@@ -396,7 +405,4 @@ unknown_plot_group <- ggplot(pre_16s_group_unknown, aes(x = followup_period, y =
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text())
-
-pre_16s_group_unknown
-unknown_plot_group
 ```
