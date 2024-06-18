@@ -22,7 +22,7 @@ Cleaning and reshaping the demographics & Ready4Work Passport activity dataset (
 ### v3_status_change_analysis.Rmd
 Contains the code for plotting the follow-up status graphs and producing the status change table. Requires `v3_cleaning.Rmd` to run first.
 
-### v3_11s_analysis.Rmd
+### v3_11s_unique_dates_analysis.Rmd
 Prepares the 1:1 coaching dataset for analysis. Exploratory plotting of 1:1 sessions counted as unique dates. Requires `v3_cleaning.Rmd` to run first.
 
 #### Required datasets:
@@ -30,7 +30,7 @@ Prepares the 1:1 coaching dataset for analysis. Exploratory plotting of 1:1 sess
 #### Required scripts:
 * `v3_simplified_find_year.R`
 
-### v3_unique_11s_analysis.Rmd
+### v3_11s_sessions_analysis.Rmd
 Prepares the 1:1 coaching dataset for analysis. Exploratory plotting of 1:1 sessions counted as unique entries. Requires `v3_cleaning.Rmd` to run first.
 #### Required datasets:
 * `1:1attendance.csv`
@@ -56,7 +56,7 @@ A folder for saving outputs.
 ## Scripts 
 Contains scripts used in this analysis. Ensure that this folder is defined as the source before running a script.
 
-#### `v3_simplified_find_year.R`
+#### v3_simplified_find_year.R
 A script to find the programme year based on the date of an acitivity and an individual's start date.
 
 ### Graphs
