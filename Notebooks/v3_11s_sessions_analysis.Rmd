@@ -110,10 +110,7 @@ all_prog_years_11s <- joined_11s %>%
   group_by(upn, cohort, prog_year) %>%
   summarise(count_11s = n(), .groups = "drop")
 ```
-# Join with follow-up status
-status_11s <- all_records_with_y12q1 %>%
-  select(upn, followup_period, status) %>%
-  inner_join(all_prog_years_11s, by = "upn")
+
 ```{r}
 # Descriptives for 1:1s - all years
 counts_11s_stats <- all_prog_years_11s %>%
