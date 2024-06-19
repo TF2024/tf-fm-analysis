@@ -1,5 +1,5 @@
 ---
-title: "v3 group attendance analysis"
+title: "v3 group coaching attendance analysis"
 output: html_notebook
 ---
 
@@ -37,7 +37,6 @@ group_coaching_summary <- group_coaching_raw %>%
 # Check for and remove rows with missing values in activity date or upn
 sum(is.na(group_coaching_summary$activity_date_time))
 sum(is.na(group_coaching_summary$upn))
-group_coaching_summary <- group_coaching_summary %>% drop_na(upn)
 ```
 
 ```{r}
@@ -50,7 +49,7 @@ group_coaching_summary <- group_coaching_summary %>%
   select(-activity_date_time) %>%
   rename(date = date_only)
 
-n_distinct(group_coaching_summary$upn) #3038
+n_distinct(group_coaching_summary$upn)
 ```
 
 ```{r}

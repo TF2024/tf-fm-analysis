@@ -8,30 +8,43 @@ output:
 ---
 
 
-```{r setup, include=FALSE, cache=TRUE}
-packages <- c("dplyr", "ggplot2", "tidyr", "readr", "knitr", "stringr", "lubridate", "here")
 
-# Install the packages (if not already installed)
-installed_packages <- rownames(installed.packages())
-for (pkg in packages) {
-  if (!pkg %in% installed_packages) {
-    install.packages(pkg)
-  }
-}
-
-# Load the packages
-lapply(packages, library, character.only = TRUE)
-```
 
 # Combined thresholds
-```{r}
+
+``` r
 # Join 1:1 and group coaching counts
 combined_pre_16 <- full_join(unique_pre_16_11s, pre_16_group, by = "upn")
 combined_pre_16
+```
+
+```
+## # A tibble: 579 × 5
+##    upn   pre_16_total_11s proportion_11s pre_16_total_group proportion_group
+##    <chr>            <int>          <dbl>              <int>            <dbl>
+##  1 14896               15           62.5                 NA             NA  
+##  2 14897               15           62.5                  3             37.5
+##  3 14917               11           45.8                  1             12.5
+##  4 14949               17           70.8                  2             25  
+##  5 15124               13           54.2                 NA             NA  
+##  6 15133               11           45.8                 NA             NA  
+##  7 15136                8           33.3                 NA             NA  
+##  8 15173               17           70.8                 NA             NA  
+##  9 15201               19           79.2                  1             12.5
+## 10 15304               17           70.8                  1             12.5
+## # ℹ 569 more rows
+```
+
+``` r
 sum(is.na(combined_pre_16$proportion_group))
 ```
 
-```{r}
+```
+## [1] 61
+```
+
+
+``` r
 # Calculate combined threshold
 combined_count <- combined_pre_16$pre_16_total_group + combined_pre_16$pre_16_total_11s
 
@@ -41,14 +54,50 @@ combined_pre_16 <- combined_pre_16 %>%
 combined_pre_16
 ```
 
-```{r}
+```
+## # A tibble: 579 × 6
+##    upn   pre_16_total_11s proportion_11s pre_16_total_group proportion_group combined_proportion
+##    <chr>            <int>          <dbl>              <int>            <dbl>               <dbl>
+##  1 14896               15           62.5                 NA             NA                  NA  
+##  2 14897               15           62.5                  3             37.5                64.3
+##  3 14917               11           45.8                  1             12.5                42.9
+##  4 14949               17           70.8                  2             25                  67.9
+##  5 15124               13           54.2                 NA             NA                  NA  
+##  6 15133               11           45.8                 NA             NA                  NA  
+##  7 15136                8           33.3                 NA             NA                  NA  
+##  8 15173               17           70.8                 NA             NA                  NA  
+##  9 15201               19           79.2                  1             12.5                71.4
+## 10 15304               17           70.8                  1             12.5                64.3
+## # ℹ 569 more rows
+```
+
+
+``` r
 # Create df with proportions only
 pre_16_all <- combined_pre_16 %>%
   select(upn, proportion_11s, proportion_group, combined_proportion)
 pre_16_all
 ```
 
-```{r}
+```
+## # A tibble: 579 × 4
+##    upn   proportion_11s proportion_group combined_proportion
+##    <chr>          <dbl>            <dbl>               <dbl>
+##  1 14896           62.5             NA                  NA  
+##  2 14897           62.5             37.5                64.3
+##  3 14917           45.8             12.5                42.9
+##  4 14949           70.8             25                  67.9
+##  5 15124           54.2             NA                  NA  
+##  6 15133           45.8             NA                  NA  
+##  7 15136           33.3             NA                  NA  
+##  8 15173           70.8             NA                  NA  
+##  9 15201           79.2             12.5                71.4
+## 10 15304           70.8             12.5                64.3
+## # ℹ 569 more rows
+```
+
+
+``` r
 # Set categorical ranges
 pre_16s_all_proportions_thresholds <- pre_16_all %>%
   mutate(
@@ -90,15 +139,58 @@ pre_16s_all_proportions_thresholds <- pre_16_all %>%
 pre_16s_all_proportions_thresholds
 ```
 
+```
+## # A tibble: 579 × 7
+##    upn   proportion_11s proportion_group combined_proportion category_11s category_group category_combined
+##    <chr>          <dbl>            <dbl>               <dbl> <fct>        <fct>          <fct>            
+##  1 14896           62.5             NA                  NA   3            <NA>           <NA>             
+##  2 14897           62.5             37.5                64.3 3            5              3                
+##  3 14917           45.8             12.5                42.9 4            6              4                
+##  4 14949           70.8             25                  67.9 3            5              3                
+##  5 15124           54.2             NA                  NA   4            <NA>           <NA>             
+##  6 15133           45.8             NA                  NA   4            <NA>           <NA>             
+##  7 15136           33.3             NA                  NA   5            <NA>           <NA>             
+##  8 15173           70.8             NA                  NA   3            <NA>           <NA>             
+##  9 15201           79.2             12.5                71.4 3            6              3                
+## 10 15304           70.8             12.5                64.3 3            6              3                
+## # ℹ 569 more rows
+```
+
 # Merge with follow-up status
-```{r}
+
+``` r
 # Merge with follow-up status
 pre_16s_all_status <- pre_16s_all_proportions_thresholds %>% left_join(all_records_with_y12q1, by = "upn")
 n_distinct(pre_16s_all_status$upn)
+```
+
+```
+## [1] 579
+```
+
+``` r
 pre_16s_all_status
 ```
 
-```{r}
+```
+## # A tibble: 4,703 × 10
+##    upn   proportion_11s proportion_group combined_proportion category_11s category_group category_combined class followup_period status 
+##    <chr>          <dbl>            <dbl>               <dbl> <fct>        <fct>          <fct>             <chr> <fct>           <fct>  
+##  1 14896           62.5             NA                  NA   3            <NA>           <NA>              2023  Y12-Q1          EET    
+##  2 14896           62.5             NA                  NA   3            <NA>           <NA>              2023  Y12-Q2          Unknown
+##  3 14896           62.5             NA                  NA   3            <NA>           <NA>              2023  Y12-Q3          Unknown
+##  4 14896           62.5             NA                  NA   3            <NA>           <NA>              2023  Y12-Q4          Unknown
+##  5 14896           62.5             NA                  NA   3            <NA>           <NA>              2023  Y13-Q1          EET    
+##  6 14896           62.5             NA                  NA   3            <NA>           <NA>              2023  Y13-Q2          NEET   
+##  7 14896           62.5             NA                  NA   3            <NA>           <NA>              2023  Y13-Q3          EET    
+##  8 14896           62.5             NA                  NA   3            <NA>           <NA>              2023  Y13-Q4          Unknown
+##  9 14897           62.5             37.5                64.3 3            5              3                 2023  Y12-Q1          EET    
+## 10 14897           62.5             37.5                64.3 3            5              3                 2023  Y12-Q2          EET    
+## # ℹ 4,693 more rows
+```
+
+
+``` r
 # Exclude UPNs where combined proportion is NA (i.e. group coaching record is missing)
 pre_16s_excl_na <- pre_16s_all_status %>%
   filter(!is.na(combined_proportion)) %>%
@@ -106,8 +198,13 @@ pre_16s_excl_na <- pre_16s_all_status %>%
   filter(followup_period %in% c("Y12-Q1", "Y13-Q1", "Y13-Q4", "Y14-Q2"))
 n_distinct(pre_16s_excl_na$upn)
 ```
+
+```
+## [1] 516
+```
 # Prepare data for plotting
-```{r}
+
+``` r
 # Define category labels
 pre_16s_excl_na$category_11s <- factor(pre_16s_excl_na$category_11s,
   levels = 1:6,
@@ -125,7 +222,25 @@ pre_16s_excl_na$category_combined <- factor(pre_16s_excl_na$category_combined,
 )
 pre_16s_excl_na
 ```
-```{r}
+
+```
+## # A tibble: 1,464 × 10
+##    upn   proportion_11s proportion_group combined_proportion category_11s category_group category_combined class followup_period status 
+##    <chr>          <dbl>            <dbl>               <dbl> <fct>        <fct>          <fct>             <chr> <fct>           <fct>  
+##  1 14897           62.5             37.5                64.3 60% - 79%    20% - 39%      60% - 79%         2023  Y12-Q1          EET    
+##  2 14897           62.5             37.5                64.3 60% - 79%    20% - 39%      60% - 79%         2023  Y13-Q1          EET    
+##  3 14897           62.5             37.5                64.3 60% - 79%    20% - 39%      60% - 79%         2023  Y13-Q4          Unknown
+##  4 14917           45.8             12.5                42.9 40% - 59%    <20%           40% - 59%         2023  Y12-Q1          EET    
+##  5 14917           45.8             12.5                42.9 40% - 59%    <20%           40% - 59%         2023  Y13-Q1          Unknown
+##  6 14917           45.8             12.5                42.9 40% - 59%    <20%           40% - 59%         2023  Y13-Q4          Unknown
+##  7 14949           70.8             25                  67.9 60% - 79%    20% - 39%      60% - 79%         2024  Y12-Q1          EET    
+##  8 15201           79.2             12.5                71.4 60% - 79%    <20%           60% - 79%         2024  Y12-Q1          EET    
+##  9 15304           70.8             12.5                64.3 60% - 79%    <20%           60% - 79%         2024  Y12-Q1          EET    
+## 10 15313           70.8             12.5                64.3 60% - 79%    <20%           60% - 79%         2024  Y12-Q1          EET    
+## # ℹ 1,454 more rows
+```
+
+``` r
 # Get the total number of unique UPNs per follow-up period
 total_upns_per_followup <- pre_16s_excl_na %>%
   group_by(followup_period) %>%
@@ -133,10 +248,21 @@ total_upns_per_followup <- pre_16s_excl_na %>%
 total_upns_per_followup
 ```
 
+```
+## # A tibble: 4 × 2
+##   followup_period total_unique_upns
+##   <fct>                       <int>
+## 1 Y12-Q1                        516
+## 2 Y13-Q1                        364
+## 3 Y13-Q4                        346
+## 4 Y14-Q2                        238
+```
+
 # Plots 
 ## Plotting combined completion rates
 ### Combined completion: EET
-```{r}
+
+``` r
 # Total unique UPNs per follow-up period
 pre_16s_combined_EET <- pre_16s_excl_na %>%
   filter(status == "EET") %>%
@@ -163,13 +289,11 @@ combined_EET_plot <- ggplot(pre_16s_combined_EET, aes(x = followup_period, y = p
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text())
-
-pre_16s_combined_EET
-combined_EET_plot
 ```
 
 ### Combined completion: NEET
-```{r}
+
+``` r
 # Total unique UPNs per follow-up period
 pre_16s_combined_NEET <- pre_16s_excl_na %>%
   filter(status == "NEET") %>%
@@ -199,7 +323,8 @@ combined_NEET_plot <- ggplot(pre_16s_combined_NEET, aes(x = followup_period, y =
 ```
 
 ### Combined completion: Unknown
-```{r}
+
+``` r
 # Total unique UPNs per follow-up period
 pre_16s_combined_unknown <- pre_16s_excl_na %>%
   filter(status == "Unknown") %>%
@@ -230,7 +355,8 @@ combined_unknown_plot <- ggplot(pre_16s_combined_unknown, aes(x = followup_perio
 
 ## Plotting 1:1 completion rates
 ### 1:1 completion: EET
-```{r}
+
+``` r
 # Total unique UPNs per follow-up period
 pre_16s_11s_EET <- pre_16s_excl_na %>%
   filter(status == "EET") %>%
@@ -260,7 +386,8 @@ EET_plot_11s <- ggplot(pre_16s_11s_EET, aes(x = followup_period, y = proportion,
 ```
 
 ### 1:1 completion: NEET
-```{r}
+
+``` r
 # Total unique UPNs per follow-up period
 pre_16s_11s_NEET <- pre_16s_excl_na %>%
   filter(status == "NEET") %>%
@@ -290,7 +417,8 @@ NEET_plot_11s <- ggplot(pre_16s_11s_NEET, aes(x = followup_period, y = proportio
 ```
 
 ### 1:1 completion: Unknown
-```{r}
+
+``` r
 # Total unique UPNs per follow-up period
 pre_16s_11s_unknown <- pre_16s_excl_na %>%
   filter(status == "Unknown") %>%
@@ -321,7 +449,8 @@ unknown_plot_11s <- ggplot(pre_16s_11s_unknown, aes(x = followup_period, y = pro
 
 ## Plotting group coaching completion 
 ### Group coaching completion: EET
-```{r}
+
+``` r
 # EET - group coaching: total count
 pre_16s_group_EET <- pre_16s_excl_na %>%
   filter(status == "EET") %>%
@@ -351,7 +480,8 @@ EET_plot_group <- ggplot(pre_16s_group_EET, aes(x = followup_period, y = proport
 ```
 
 ### Group coaching completion: NEET
-```{r}
+
+``` r
 # NEET - group coaching: total count
 pre_16s_group_NEET <- pre_16s_excl_na %>%
   filter(status == "NEET") %>%
@@ -381,7 +511,8 @@ NEET_plot_group <- ggplot(pre_16s_group_NEET, aes(x = followup_period, y = propo
 ```
 
 ### Group coaching completion: Unknown
-```{r}
+
+``` r
 # Unknown - group coaching: total count
 pre_16s_group_unknown <- pre_16s_excl_na %>%
   filter(status == "Unknown") %>%

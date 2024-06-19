@@ -1,6 +1,10 @@
 ---
-title: "v3 1:1 coaching attendance analysis: unique dates"
-output: html_notebook
+title: 'v3 1:1 coaching attendance analysis: unique dates'
+output:
+  html_notebook: default
+  html_document:
+    df_print: paged
+  pdf_document: default
 ---
 
 
@@ -30,10 +34,8 @@ lapply(packages, library, character.only = TRUE)
 
 ```{r}
 attendance_11s_raw <- read.csv(here("Datasets", "1_1attendance.csv"))
-attendance_11s_raw # rows: 52,951, UPNS:
-n_distinct(attendance_11s_raw$external_identifier) # 2708
+n_distinct(attendance_11s_raw$external_identifier)
 ```
-
 
 ```{r}
 # Filter for status 'attended'
@@ -42,9 +44,6 @@ attendance_11s <- attendance_11s_raw %>%
   # Select and rename columns
   select(activity_date_time, external_identifier) %>%
   rename(upn = external_identifier)
-
-nrow(attendance_11s) # 43225
-n_distinct(attendance_11s$upn) # 2698
 ```
 ```{r}
 # Check for and remove rows with missing values
@@ -60,6 +59,7 @@ attendance_11s$date_only <- as.Date(attendance_11s$date_only, format = "%d/%m/%Y
 attendance_11s <- attendance_11s %>%
   select(-activity_date_time) %>%
   rename(date = date_only)
+attendance_11s
 ```
 
 ```{r}
@@ -88,7 +88,6 @@ joined_11s <- attendance_11s %>%
   left_join(v3_dem_r4w %>% select(upn, case_start, cohort), by = "upn") %>%
   filter(!is.na(case_start))
 joined_11s
-n_distinct(joined_11s$upn)
 ```
 
 ```{r}
